@@ -1,0 +1,36 @@
+type Team {
+  key: String
+  team_number: Int
+  nickname: String
+  name: String
+  school_name: String
+  city: String
+  state_prov: String
+  country: String
+  postal_code: String
+  website: String
+  rookie_year: Int
+  motto: String
+  years_participated: [Int!]
+  robots: [Robot!]
+  districts: [District!]
+}
+
+type District {
+  abbreviation: String
+  display_name: String
+  key: String
+  year: Int
+}
+
+type Robot {
+  year: Int
+  robot_name: String
+  key: String
+  team_key: String
+}
+
+type Query {
+  team_by_key(key: String!): Team
+  team_by_page_num(page_num: Int!): [Team!]
+}
