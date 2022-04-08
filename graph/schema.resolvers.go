@@ -6,6 +6,8 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"tba-gql/graph/generated"
 	"tba-gql/graph/model"
@@ -13,65 +15,71 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func FetchAsync[T any](wg *sync.WaitGroup, t **T, url string, eg *errgroup.Group) {
-	wg.Add(1)
-	go func(t **T) {
-		var err error
-		*t, err = Fetch[T](url)
-		eg.Go(func() error {
-			return err
-		})
-		wg.Done()
-	}(t)
-}
-
-func (r *queryResolver) TeamByKey(ctx context.Context, key string) (*model.Team, error) {
-	wg := sync.WaitGroup{}
-	eg := errgroup.Group{}
-	var team *model.Team
-	FetchAsync(&wg, &team, fmt.Sprintf("https://www.thebluealliance.com/api/v3/team/%v", key), &eg)
-
-	var yearsPaticipated *[]int
-	FetchAsync(&wg, &yearsPaticipated, fmt.Sprintf("https://www.thebluealliance.com/api/v3/team/%v/years_participated", key), &eg)
-
-	var robots *[]*model.Robot
-	FetchAsync(&wg, &robots, fmt.Sprintf("https://www.thebluealliance.com/api/v3/team/%v/robots", key), &eg)
-
-	var districts *[]*model.District
-	FetchAsync(&wg, &districts, fmt.Sprintf("https://www.thebluealliance.com/api/v3/team/%v/districts", key), &eg)
-	wg.Wait()
-	if err := eg.Wait(); err != nil {
-		return nil, err
-	}
-	team.YearsParticipated = *yearsPaticipated
-	team.Robots = *robots
-	team.Districts = *districts
-	return team, nil
+func (r *queryResolver) TeamByNumber(ctx context.Context, number int) (*model.Team, error) {
+	return FetchTeam(number)
 }
 
 func (r *queryResolver) TeamByPageNum(ctx context.Context, pageNum int) ([]*model.Team, error) {
 	keys, err := Fetch[[]string](fmt.Sprintf("https://www.thebluealliance.com/api/v3/teams/%v/keys", pageNum))
 	wg := sync.WaitGroup{}
-
+	eg := errgroup.Group{}
 	var teams []*model.Team = make([]*model.Team, len(*keys))
-
+	eg.Go(func() error { return err })
 	for i, v := range *keys {
 		wg.Add(1)
 		go func(i int, key string) {
-			team, err := r.TeamByKey(ctx, key)
-			if err != nil {
-				panic(err)
+			fmt.Printf("Starting %v\n", i)
+			num, convErr := strconv.Atoi(strings.TrimPrefix(key, "frc"))
+			eg.Go(func() error { return convErr })
+			if convErr != nil {
+				return
 			}
+			team, err := FetchTeam(num)
+			eg.Go(func() error { return err })
 			teams[i] = team
 			wg.Done()
+			fmt.Printf("Finished %v\n", i)
 		}(i, v)
 	}
 
 	wg.Wait()
-	return teams, err
+	if e := eg.Wait(); e != nil {
+		return nil, e
+	}
+
+	return teams, nil
+}
+
+func (r *teamResolver) Events(ctx context.Context, obj *model.Team, where *model.EventComparisonExp) ([]*model.Event, error) {
+	if where != nil {
+		if where.Key != nil {
+			return Filter(obj.Events, func(t *model.Event) bool { return *t.Key == *where.Key.Eq }), nil
+		}
+	}
+	return obj.Events, nil
 }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Team returns generated.TeamResolver implementation.
+func (r *Resolver) Team() generated.TeamResolver { return &teamResolver{r} }
+
 type queryResolver struct{ *Resolver }
+type teamResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func Filter[T any](arr []T, cond func(T) bool) []T {
+	result := []T{}
+	for i := range arr {
+		if cond(arr[i]) {
+			result = append(result, arr[i])
+		}
+	}
+	return result
+}

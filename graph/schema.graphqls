@@ -14,6 +14,7 @@ type Team {
   years_participated: [Int!]
   robots: [Robot!]
   districts: [District!]
+  events(where: Event_comparison_exp): [Event!]
 }
 
 type District {
@@ -30,7 +31,91 @@ type Robot {
   team_key: String
 }
 
+type Event {
+  key: String
+
+  name: String
+
+  event_code: String
+
+  event_type: Int
+
+  district: District
+  city: String
+
+  state_prov: String
+
+  country: String
+
+  start_date: String
+
+  end_date: String
+
+  year: Int
+
+  short_name: String
+
+  event_type_string: String
+
+  week: Int
+
+  address: String
+
+  postal_code: String
+
+  gmaps_place_id: String
+
+  gmaps_url: String
+
+  lat: Float
+
+  lng: Float
+
+  location_name: String
+
+  timezone: String
+
+  website: String
+
+  first_event_id: String
+
+  first_event_code: String
+
+  webcasts: [Webcast]
+  division_keys: [String]
+  parent_event_key: String
+
+  playoff_type: Int
+
+  playoff_type_string: String
+}
+
+type Webcast {
+  type: String
+  channel: String
+  date: String
+  file: String
+}
+
+input Int_comparison_exp {
+  _eq: Int
+  _gt: Int
+  _gte: Int
+  _in: [Int!]
+  _is_null: Boolean
+  _lt: Int
+  _lte: Int
+  _neq: Int
+  _nin: [Int!]
+}
+input String_comparison_exp {
+  _eq: String
+}
+input Event_comparison_exp {
+  key: String_comparison_exp
+}
+
 type Query {
-  team_by_key(key: String!): Team
+  team_by_number(number: Int!): Team
   team_by_page_num(page_num: Int!): [Team!]
 }

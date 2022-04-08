@@ -9,11 +9,64 @@ type District struct {
 	Year         *int    `json:"year"`
 }
 
+type Event struct {
+	Key               *string    `json:"key"`
+	Name              *string    `json:"name"`
+	EventCode         *string    `json:"event_code"`
+	EventType         *int       `json:"event_type"`
+	District          *District  `json:"district"`
+	City              *string    `json:"city"`
+	StateProv         *string    `json:"state_prov"`
+	Country           *string    `json:"country"`
+	StartDate         *string    `json:"start_date"`
+	EndDate           *string    `json:"end_date"`
+	Year              *int       `json:"year"`
+	ShortName         *string    `json:"short_name"`
+	EventTypeString   *string    `json:"event_type_string"`
+	Week              *int       `json:"week"`
+	Address           *string    `json:"address"`
+	PostalCode        *string    `json:"postal_code"`
+	GmapsPlaceID      *string    `json:"gmaps_place_id"`
+	GmapsURL          *string    `json:"gmaps_url"`
+	Lat               *float64   `json:"lat"`
+	Lng               *float64   `json:"lng"`
+	LocationName      *string    `json:"location_name"`
+	Timezone          *string    `json:"timezone"`
+	Website           *string    `json:"website"`
+	FirstEventID      *string    `json:"first_event_id"`
+	FirstEventCode    *string    `json:"first_event_code"`
+	Webcasts          []*Webcast `json:"webcasts"`
+	DivisionKeys      []*string  `json:"division_keys"`
+	ParentEventKey    *string    `json:"parent_event_key"`
+	PlayoffType       *int       `json:"playoff_type"`
+	PlayoffTypeString *string    `json:"playoff_type_string"`
+}
+
+type EventComparisonExp struct {
+	Key *StringComparisonExp `json:"key"`
+}
+
+type IntComparisonExp struct {
+	Eq     *int  `json:"_eq"`
+	Gt     *int  `json:"_gt"`
+	Gte    *int  `json:"_gte"`
+	In     []int `json:"_in"`
+	IsNull *bool `json:"_is_null"`
+	Lt     *int  `json:"_lt"`
+	Lte    *int  `json:"_lte"`
+	Neq    *int  `json:"_neq"`
+	Nin    []int `json:"_nin"`
+}
+
 type Robot struct {
 	Year      *int    `json:"year"`
 	RobotName *string `json:"robot_name"`
 	Key       *string `json:"key"`
 	TeamKey   *string `json:"team_key"`
+}
+
+type StringComparisonExp struct {
+	Eq *string `json:"_eq"`
 }
 
 type Team struct {
@@ -32,4 +85,12 @@ type Team struct {
 	YearsParticipated []int       `json:"years_participated"`
 	Robots            []*Robot    `json:"robots"`
 	Districts         []*District `json:"districts"`
+	Events            []*Event    `json:"events"`
+}
+
+type Webcast struct {
+	Type    *string `json:"type"`
+	Channel *string `json:"channel"`
+	Date    *string `json:"date"`
+	File    *string `json:"file"`
 }
